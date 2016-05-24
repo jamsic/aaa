@@ -1,0 +1,64 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Система автомаматической проверки домашнего задания</title>
+    <link href="bootstrap-3.3.5-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap-3.3.5-dist/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="font-awesome-4.4.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="mystyles.css" rel="stylesheet">
+    <link rel="icon" type="image/ico" href="book.ico">
+  </head>
+  <body>
+
+  <div class="row row-content">
+    <div class="col-xs-6 col-xs-offset-3">
+<?php
+#print_r($_POST);
+session_start();
+setlocale(LC_ALL, 'ru_RU.UTF-8');
+require_once 'login.php';
+$connection = new mysqli($db_hostname, $db_username, $db_password, $db_database);
+if (! isset($_SESSION['username']) &&
+    ! isset($_SESSION['forename']) &&
+    ! isset($_SESSION['surname'])) {
+    echo "Для отображения страницы необходима авторизация <a href='index.php'>Щелкните здесь</a>";
+   }
+else {
+  $ids = explode("_", $_POST['id']);
+  $task = get_task($connection, $ids[0], $ids[1]);
+  $row = $task->fetch_array(MYSQLI_NUM);
+  $hmtsk = $ids[0];
+  $_SESSION['hmtskid'] = $hmtsk;
+  $_SESSION['usrid'] = $ids[1];
+  #echo $hmtsk;
+  echo "<h2>Оценить задание</h2>";
+  echo "<h4>Предмет: " . "$row[2]</h4>";
+  echo "<h4>Задание: " . "$row[1]</h4>";
+  echo "<h4>Ответ студента " . $row[9] . " " . $row[10] . ":</h4>";
+  echo "<div class='well well-lg'>" . $row[7] . "</div>";
+  ?>
+
+  <form action="markgiven.php" method="POST">
+    <input type="radio" name="mark" value="1">1
+    <input type="radio" name="mark" value="2">2
+    <input type="radio" name="mark" value="3">3
+    <input type="radio" name="mark" value="4">4
+    <input type="radio" name="mark" value="5">5
+    <button class="btn btn-primary">Поставить оценку</button>
+  </form>
+
+  <?php
+}
+
+$connection->close();
+
+function get_task($connection, $hmtskid, $usrid) {
+  $query = "SELECT * FROM hometasks h JOIN hometask_to_user hu ON h.id=hu.hometask_id JOIN users u ON u.id=hu.user_id WHERE hu.user_id='$usrid' and hu.hometask_id=$hmtskid";
+  $result = $connection->query($query);
+  return $result;
+}
+?>
+    </div>
+  </div>
+</body>
+</html>
